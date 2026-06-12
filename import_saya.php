@@ -7,7 +7,8 @@ $db_baru = 'bengkel_ultimate';
 $koneksi = @mysqli_connect($host, $user, $pass);
 
 if (!$koneksi) {
-    die('GAGAL: ' . mysqli_connect_error());
+    die('GAGAL:
+     ' . mysqli_connect_error());
 }
 
 echo "Berhasil masuk ke server DB<br>";
