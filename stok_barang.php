@@ -1,103 +1,190 @@
 <?php
-include 'koneksi.php';
+include "koneksi.php";
 
-// Proses tambah barang
-if (isset($_POST['tambah'])) {
-    $kode = $_POST['kode_barang'];
-    $nama = $_POST['nama_barang'];
-    $jenis = $_POST['jenis'];
-    $stok = $_POST['stok'];
-    $beli = $_POST['harga_beli'];
-    $jual = $_POST['harga_jual'];
-    $ket = $_POST['keterangan'];
-
-    $sql = "INSERT INTO barang (kode_barang, nama_barang, jenis, stok, harga_beli, harga_jual, keterangan)
-            VALUES ('$kode', '$nama', '$jenis', '$stok', '$beli', '$jual', '$ket')";
-    
-    if (mysqli_query($koneksi, $sql)) {
-        $pesan = "<p style='color:green;'> Barang berhasil ditambahkan!</p>";
-    } else {
-        $pesan = "<p style='color:red;'> Gagal: " . mysqli_error($koneksi) . "</p>";
-    }
+// Proses simpan barang baru
+if (isset($_POST['simpan'])) {
+    mysqli_query($koneksi,"INSERT INTO barang VALUES ('','$_POST[nama_barang]','$_POST[stok]','$_POST[harga_umum]','$_POST[harga_member]')");
+    echo "<script>alert('Barang Berhasil Ditambahkan'); location='stok_barang.php';</script>";
 }
 
-// Ambil semua data barang
-$sql_barang = "SELECT * FROM barang ORDER BY nama_barang ASC";
-$hasil_barang = mysqli_query($koneksi, $sql_barang);
+// Ambil daftar barang
+$data = mysqli_query($koneksi,"SELECT * FROM barang");
 ?>
-
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Stok Barang - MyBengkel</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Stok Barang - MyBengkel</title>
     <style>
-        body { font-family: Arial; margin: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #f2f2f2; }
-        form { border: 1px solid #ddd; padding: 15px; max-width: 500px; margin-bottom: 20px; }
-        input { width: 100%; padding: 8px; margin: 5px 0 15px 0; }
-        button { padding: 8px 15px; background: #28a745; color: white; border: none; cursor: pointer; }
-        .stok-min { color: red; font-weight: bold; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+        .wadah {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h2 {
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 25px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .kotak-form {
+            background: #ffffff;
+            padding: 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            margin-bottom: 25px;
+        }
+        .form-baris {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .form-grup {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        input {
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
+        }
+        .tombol {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        button, a.tombol-biasa {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        a.tombol-biasa {
+            background-color: #6c757d;
+            color: white;
+        }
+        a.tombol-biasa:hover {
+            background-color: #545b62;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f8ff;
+        }
+        .kembali {
+            text-align: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <h2>Manajemen Stok Barang</h2>
-    <?php if(isset($pesan)) echo $pesan; ?>
+    <div class="wadah">
+        <h2>📦 Manajemen Stok Barang</h2>
 
-    <!-- Form Tambah Barang -->
-    <h4>Tambah Barang Baru</h4>
-    <form method="post">
-        <label>Kode Barang:</label>
-        <input type="text" name="kode_barang" required>
+        <!-- Form Tambah Barang -->
+        <div class="kotak-form">
+            <h3 style="margin-bottom:15px; color:#222;">Tambah Barang Baru</h3>
+            <form method="POST">
+                <div class="form-baris">
+                    <div class="form-grup">
+                        <label>Nama Barang:</label>
+                        <input type="text" name="nama_barang" required>
+                    </div>
+                    <div class="form-grup">
+                        <label>Stok Awal:</label>
+                        <input type="number" name="stok" min="0" value="0" required>
+                    </div>
+                    <div class="form-grup">
+                        <label>Harga Umum (Rp):</label>
+                        <input type="number" name="harga_umum" min="0" required>
+                    </div>
+                    <div class="form-grup">
+                        <label>Harga Member (Rp):</label>
+                        <input type="number" name="harga_member" min="0" required>
+                    </div>
+                </div>
+                <div class="tombol">
+                    <button type="submit" name="simpan">Simpan Barang</button>
+                    <a href="index.php" class="tombol-biasa">Kembali</a>
+                </div>
+            </form>
+        </div>
 
-        <label>Nama Barang:</label>
-        <input type="text" name="nama_barang" required>
+        <!-- Daftar Barang -->
+        <h3 style="color:white; margin-bottom:12px;">Daftar Barang</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nama Barang</th>
+                    <th>Stok</th>
+                    <th>Harga Umum</th>
+                    <th>Harga Member</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php while($b=mysqli_fetch_assoc($data)){ ?>
+                <tr>
+                    <td><?= $b['nama_barang'] ?></td>
+                    <td><?= $b['stok'] ?></td>
+                    <td>Rp <?= number_format((int)$b['harga_umum']) ?></td>
+                    <td>Rp <?= number_format((int)$b['harga_member']) ?></td>
+                </tr>
+                <?php } ?>
+            </tbody>
+        </table>
 
-        <label>Jenis:</label>
-        <input type="text" name="jenis" placeholder="Oli, Filter, dll">
-
-        <label>Stok Awal:</label>
-        <input type="number" name="stok" min="0" value="0">
-
-        <label>Harga Beli (Rp):</label>
-        <input type="number" name="harga_beli" min="0">
-
-        <label>Harga Jual (Rp):</label>
-        <input type="number" name="harga_jual" min="0">
-
-        <label>Keterangan:</label>
-        <input type="text" name="keterangan">
-
-        <button type="submit" name="tambah">Simpan Barang</button>
-    </form>
-
-    <!-- Tabel Daftar Barang -->
-    <h4>Daftar Stok Barang</h4>
-    <table>
-        <tr>
-            <th>Kode</th>
-            <th>Nama Barang</th>
-            <th>Jenis</th>
-            <th>Stok</th>
-            <th>Harga Jual</th>
-            <th>Keterangan</th>
-        </tr>
-        <?php while ($data = mysqli_fetch_assoc($hasil_barang)) { ?>
-        <tr>
-            <td><?php echo $data['kode_barang']; ?></td>
-            <td><?php echo $data['nama_barang']; ?></td>
-            <td><?php echo $data['jenis']; ?></td>
-            <td class="<?php echo ($data['stok'] < 3) ? 'stok-min' : ''; ?>">
-                <?php echo $data['stok']; ?>
-            </td>
-            <td>Rp <?php echo number_format($data['harga_jual'], 0, ',', '.'); ?></td>
-            <td><?php echo $data['keterangan']; ?></td>
-        </tr>
-        <?php } ?>
-    </table>
-
-    <br>
-    <a href="index.php">Kembali ke Beranda</a>
+        <div class="kembali">
+            <a href="index.php" style="color:white; text-decoration:none;">← Kembali ke Menu Utama</a>
+        </div>
+    </div>
 </body>
 </html>
