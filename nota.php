@@ -1,49 +1,86 @@
 <?php
-include 'koneksi.php';
+include "koneksi.php";
 
-// 1. Cek apakah ada ID transaksi yang dikirim lewat URL
-if (!isset($_GET['id']) || $_GET['id'] == 0) {
-    echo "<h3>Error: Transaksi tidak ditemukan!</h3>";
-    echo "<a href='transaksi_bengkel.php'>Kembali ke Kasir</a>";
+// Ambil ID dari alamat URL
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+
+// Cek jika ID kosong atau tidak valid
+if ($id <= 0) {
+    echo "<div style='text-align:center; margin-top:50px; font-family:Arial;'>
+    <h3 style='color:red;'>Error: Transaksi tidak ditemukan!</h3>
+    <a href='transaksi_bengkel.php' style='color:blue; text-decoration:underline;'>Kembali ke Kasir</a>
+    </div>";
     exit;
 }
 
-$id_t = $_GET['id'];
+// Ambil data transaksi lengkap sesuai ID
+$data = mysqli_query($koneksi,"
+    SELECT transaksi.*, pelanggan.nama_pemilik, barang.nama_barang
+    FROM transaksi
+    JOIN pelanggan ON transaksi.no_plat = pelanggan.no_plat
+    LEFT JOIN barang ON transaksi.id_barang = barang.id_barang
+    WHERE transaksi.id_transaksi = '$id'
+");
 
-// 2. Query untuk mengambil detail transaksi (menggabungkan tabel pelanggan dan barang)
-$sql = "SELECT transaksi.*, pelanggan.nama_pemilik, pelanggan.no_plat, barang.nama_barang 
-        FROM transaksi 
-        JOIN pelanggan ON transaksi.id_pelanggan = pelanggan.id_pelanggan 
-        JOIN barang ON transaksi.id_barang = barang.id_barang 
-        WHERE transaksi.id_transaksi = '$id_t'";
+$transaksi = mysqli_fetch_assoc($data);
 
-$eksekusi = mysqli_query($conn, $sql);
-$data = mysqli_fetch_assoc($eksekusi);
-
-// 3. Jika data tidak ditemukan di database
-if (!$data) {
-    echo "<h3>Data transaksi ID $id_t tidak ada di database.</h3>";
+// Jika data tidak ada di database
+if (!$transaksi) {
+    echo "<div style='text-align:center; margin-top:50px; font-family:Arial;'>
+    <h3 style='color:red;'>Error: Transaksi tidak ditemukan!</h3>
+    <a href='transaksi_bengkel.php' style='color:blue; text-decoration:underline;'>Kembali ke Kasir</a>
+    </div>";
     exit;
 }
 ?>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Nota Transaksi - MyBengkel</title>
+    <style>
+        body { font-family:Arial, sans-serif; padding:30px; max-width:500px; margin:0 auto; border:1px solid #ccc; border-radius:8px; background:#fff; }
+        h2 { text-align:center; border-bottom:1px dashed #333; padding-bottom:10px; margin-bottom:20px; }
+        .baris { display:flex; justify-content:space-between; margin:8px 0; }
+        .total { font-weight:bold; font-size:16px; border-top:1px solid #333; padding-top:10px; margin-top:10px; }
+        .tengah { text-align:center; margin-top:20px; font-size:14px; }
+    </style>
+</head>
+<body>
+    <h2>🔧 NOTA BENGKEL</h2>
 
-<div style="width: 350px; border: 1px solid #000; padding: 15px; font-family: monospace;">
-    <center>
-        <strong>BENGKEL PRO ULTIMATE</strong><br>
-        Nota Digital Transaksi
-    </center>
-    <hr>
-    ID Transaksi : <?= $data['id_transaksi'] ?> <br>
-    Tanggal      : <?= $data['tgl_transaksi'] ?> <br>
-    Pelanggan    : <?= $data['nama_pemilik'] ?> <br>
-    No. Plat     : <?= $data['no_plat'] ?> <br>
-    <hr>
-    Item         : <?= $data['nama_barang'] ?> <br>
-    Total Bayar  : <strong>Rp <?= number_format($data['total_bayar']) ?></strong>
-    <hr>
-    <center>Terima Kasih Atas Kunjungan Anda</center>
-</div>
+    <div class="baris">
+        <span>Tanggal:</span>
+        <span><?= $transaksi['tanggal'] ?></span>
+    </div>
+    <div class="baris">
+        <span>Nama Pelanggan:</span>
+        <span><?= $transaksi['nama_pemilik'] ?></span>
+    </div>
+    <div class="baris">
+        <span>No. Plat:</span>
+        <span><?= $transaksi['no_plat'] ?></span>
+    </div>
+    <div class="baris">
+        <span>Layanan:</span>
+        <span><?= $transaksi['layanan'] ?></span>
+    </div>
+    <div class="baris">
+        <span>Sparepart:</span>
+        <span><?= $transaksi['nama_barang'] ?? 'Tidak Pakai' ?></span>
+    </div>
+    <div class="baris">
+        <span>Jumlah:</span>
+        <span><?= $transaksi['jumlah'] ?? 0 ?></span>
+    </div>
+    <div class="baris total">
+        <span>TOTAL BAYAR:</span>
+        <span>Rp <?= number_format((int)$transaksi['total']) ?></span>
+    </div>
 
-<br>
-<button onclick="window.print()">Cetak Nota</button>
-<a href="index.php">Kembali ke Menu</a>
+    <div class="tengah">
+        Terima kasih atas kunjungan Anda!<br>
+        <a href="transaksi_bengkel.php" style="margin-top:15px; display:inline-block; text-decoration:none; background:#007bff; color:white; padding:8px 15px; border-radius:4px;">Kembali ke Kasir</a>
+    </div>
+</body>
+</html>
