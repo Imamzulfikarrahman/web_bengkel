@@ -1,0 +1,120 @@
+<?php
+session_start();
+// Cek jika sudah login, langsung ke menu utama
+if (isset($_SESSION['admin'])) {
+    header("Location: index.php");
+    exit;
+}
+
+// Proses masuk
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $user = trim($_POST['username']);
+    $pass = trim($_POST['password']);
+
+    // Data admin (bisa diubah sesuai keinginan)
+    $admin_user = "admin";
+    $admin_pass = "bengkel123";
+
+    if ($user === $admin_user && $pass === $admin_pass) {
+        $_SESSION['admin'] = $user;
+        header("Location: index.php");
+        exit;
+    } else {
+        $pesan = "Nama pengguna atau kata sandi salah!";
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Admin - MyBengkel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .kotak-login {
+            background: #ffffff;
+            padding: 35px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 360px;
+        }
+        h2 {
+            text-align: center;
+            color: #222;
+            margin-bottom: 20px;
+        }
+        .pesan {
+            color: red;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .grup {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="kotak-login">
+        <h2>🔐 Masuk Admin</h2>
+        <?php if (isset($pesan)) echo "<div class='pesan'>$pesan</div>"; ?>
+        <form method="POST" action="">
+            <div class="grup">
+                <label>Nama Pengguna</label>
+                <input type="text" name="username" required>
+            </div>
+            <div class="grup">
+                <label>Kata Sandi</label>
+                <input type="password" name="password" required>
+            </div>
+            <button type="submit">Masuk ke Aplikasi</button>
+        </form>
+    </div>
+</body>
+</html>
